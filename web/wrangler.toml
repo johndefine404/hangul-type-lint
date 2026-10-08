@@ -1,0 +1,42 @@
+# [Define404] hangul-type-lint 무료 웹판
+name = "hangul-type-lint"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 화면(index.html)을 같은 주소에서 내보낸다
+[assets]
+directory = "./public"
+
+# Cloudflare Browser Rendering: 실제 페이지를 열어 검사한다. MOCK = "1" 이면 쓰지 않는다
+[browser]
+binding = "BROWSER"
+
+# 검사 결과와 리포트 신청(리드), 하루 사용량
+[[d1_databases]]
+binding = "DB"
+database_name = "hangul-type-lint"
+database_id = "00000000-0000-0000-0000-000000000000" # 배포 전에 wrangler d1 create 로 받은 값으로 바꾼다
+migrations_dir = "migrations"
+
+# 브라우저 검사 함수 원문을 글자 그대로 불러온다
+[[rules]]
+type = "Text"
+globs = ["**/*.page.js"]
+fallthrough = false
+
+# 접속자 한 명당 1분에 10번까지 (검사와 리포트 신청 합산)
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1101"
+simple = { limit = 10, period = 60 }
+
+[vars]
+# 1 이면 브라우저를 띄우지 않고 미리 만든 결과를 돌려준다 (로컬 시험용)
+MOCK = "1"
+# 하루 검사 상한 (Browser Rendering 무료 한도 보호)
+DAILY_LIMIT = "50"
+# 하루 리포트 메일 상한
+DAILY_MAIL_LIMIT = "100"
+MAIL_FROM = "한글 타이포 린트 <onboarding@resend.dev>"
+CONTACT_URL = "https://contact.define404.com"

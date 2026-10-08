@@ -1,0 +1,20 @@
+# [Define404] hangul-type-lint
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+*.pem
+*.key
+secrets/
+*.log
+.DS_Store
+# 검사 리포트·화면 캡처 출력
+htl-report/
+reports/
+screenshots/
+shots/
+# wrangler types 로 만드는 파일
+worker-configuration.d.ts

@@ -1,0 +1,25 @@
+{
+  "name": "hangul-type-lint",
+  "version": "0.1.0",
+  "description": "한국어가 웹 화면에서 어색하게 보이는 곳(단어 중간 줄바꿈, 헤드라인 강제 줄바꿈, 한글 웹폰트, 390px 넘침)을 찾고 고치는 CSS 한 줄을 붙여 주는 검사기",
+  "author": "Define404 <john@define404.com>",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "hangul-type-lint": "bin/hangul-type-lint.mjs"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "check": "node bin/hangul-type-lint.mjs check",
+    "test": "node test/run.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}

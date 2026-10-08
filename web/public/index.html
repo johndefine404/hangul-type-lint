@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>한글 타이포 린트</title>
+<meta name="description" content="홈페이지 주소를 넣으면 한국어가 화면에서 어색하게 보이는 곳을 찾고, 고치는 CSS 한 줄을 붙여 주는 무료 검사기">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2324201C'/%3E%3Cpath d='M9 9h8v3h-5v11H9zM20 9h3v14h-3z' fill='%23F4C95D'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root{
+    --ink:#24201C; --sub:#5E5650; --line:#E6DED6; --bg:#FAF7F3; --card:#FFFFFF;
+    --accent:#1F6F5C; --accent-soft:#E4F1EC; --mark:#F4C95D; --bad:#C4352B; --mid:#B4690E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo",sans-serif;word-break:keep-all;overflow-wrap:anywhere;line-height:1.65;font-size:16px}
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+  header.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;text-decoration:none}
+  .brand i{display:inline-flex;width:32px;height:32px;border-radius:8px;background:var(--ink);color:var(--mark);font-style:normal;font-size:17px;align-items:center;justify-content:center}
+  .top nav{display:flex;gap:18px;font-size:14px;color:var(--sub)}
+  .top nav a{text-decoration:none}
+  .top nav a:hover{color:var(--ink)}
+
+  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:start;padding:32px 0 64px}
+  .hero h1{font-size:clamp(30px,4.2vw,46px);line-height:1.28;letter-spacing:-.015em;margin:0 0 18px;font-weight:800;max-width:15em}
+  .hero h1 mark{background:linear-gradient(transparent 62%,var(--mark) 62%);color:inherit}
+  .lead{font-size:18px;color:var(--sub);margin:0 0 28px;max-width:32em}
+  form.check{display:flex;gap:8px;max-width:560px}
+  form.check input{flex:1;min-width:0;font:inherit;font-size:16px;padding:14px 16px;border:1px solid #CFC5BB;border-radius:12px;background:var(--card)}
+  form.check input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px 20px;background:var(--ink);color:#fff;cursor:pointer;white-space:nowrap}
+  button:disabled{opacity:.6;cursor:wait}
+  .hint{font-size:14px;color:var(--sub);margin:10px 0 0}
+
+  .demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .demo h2{font-size:15px;margin:0 0 14px;color:var(--sub);font-weight:600}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pane{border-radius:10px;padding:14px;font-size:17px;line-height:1.55;font-weight:600}
+  .pane small{display:block;font-size:12px;font-weight:600;margin-bottom:8px}
+  .pane.before{background:#FBEDEB}
+  .pane.before small{color:var(--bad)}
+  .pane.before .ln{display:block}
+  .pane.before b{color:var(--bad);text-decoration:underline wavy;text-underline-offset:4px}
+  .pane.after{background:var(--accent-soft)}
+  .pane.after small{color:var(--accent)}
+  .demo code{display:inline-block;margin-top:14px}
+
+  section.block{padding:64px 0;border-top:1px solid var(--line)}
+  .sec-head{display:grid;grid-template-columns:220px 1fr;gap:32px;margin-bottom:28px}
+  .sec-head .no{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+  .sec-head h2{font-size:clamp(23px,3vw,30px);margin:0 0 6px;line-height:1.35}
+  .sec-head p{margin:0;color:var(--sub);max-width:34em}
+
+  #result[hidden]{display:none}
+  .res{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start}
+  .scorebox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .scorebox .num{font-size:64px;font-weight:800;line-height:1}
+  .scorebox .grade{font-size:17px;font-weight:700;margin:8px 0 14px}
+  .scorebox .cnt{display:flex;gap:14px;font-size:14px;color:var(--sub);flex-wrap:wrap}
+  .scorebox .cnt b{color:var(--ink);font-size:18px;margin-right:2px}
+  .scorebox .url{font-size:13px;color:var(--sub);margin-top:14px}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:#F2ECE6;color:var(--sub);margin-bottom:12px}
+  ul.probs{list-style:none;margin:0 0 20px;padding:0;background:var(--card);border:1px solid var(--line);border-radius:16px}
+  ul.probs li{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+  ul.probs li:last-child{border-bottom:0}
+  .sev{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;color:#fff;flex:none}
+  .sev.high{background:var(--bad)}.sev.medium{background:var(--mid)}.sev.low{background:var(--sub)}
+  ul.probs .n{margin-left:auto;color:var(--sub);font-size:14px;flex:none}
+
+  form.lead{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  form.lead h3{margin:0 0 6px;font-size:18px}
+  form.lead > p{margin:0 0 16px;color:var(--sub);font-size:15px}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .fields input{font:inherit;font-size:16px;padding:12px 14px;border:1px solid #CFC5BB;border-radius:10px;min-width:0}
+  label.agree{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:10px 0 4px;cursor:pointer}
+  label.agree input{margin-top:5px;flex:none;width:18px;height:18px}
+  details{font-size:14px;color:var(--sub);margin:0 0 6px 28px}
+  details ul{margin:6px 0 0;padding-left:18px}
+  .msg{margin:12px 0 0;font-size:15px}
+  .msg.err{color:var(--bad)}
+  .msg.ok{color:var(--accent)}
+
+  .fix{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;background:var(--ink);color:#fff;border-radius:18px;padding:28px}
+  .fix h2{margin:0 0 6px;font-size:22px}
+  .fix p{margin:0;color:#D9D1C9;max-width:36em}
+  .fix a.btn{display:inline-block;background:var(--mark);color:var(--ink);font-weight:800;text-decoration:none;border-radius:12px;padding:14px 22px;white-space:nowrap}
+
+  dl.items{display:grid;grid-template-columns:240px 1fr;margin:0;border-top:1px solid var(--line)}
+  dl.items dt,dl.items dd{padding:14px 0;border-bottom:1px solid var(--line);margin:0}
+  dl.items dt{font-weight:700}
+  dl.items dd{color:var(--sub)}
+  dl.items code{color:var(--ink)}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;background:#F2ECE6;border-radius:6px;padding:2px 6px}
+  pre{margin:0;background:#2B2622;color:#F3ECE4;border-radius:14px;padding:18px;overflow-x:auto;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;line-height:1.7}
+  .cli{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  .cli > div{min-width:0}
+  .cli p{margin:0 0 12px;color:var(--sub)}
+
+  footer{padding:36px 0 80px;border-top:1px solid var(--line);font-size:14px;color:var(--sub);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;gap:32px;padding-top:12px}
+    .sec-head{grid-template-columns:1fr;gap:6px}
+    .res{grid-template-columns:1fr}
+    .fix{grid-template-columns:1fr}
+    dl.items{grid-template-columns:1fr}
+    dl.items dt{border-bottom:0;padding-bottom:2px}
+    dl.items dd{padding-top:0}
+    .cli{grid-template-columns:1fr}
+    .top nav{display:none}
+  }
+  @media (max-width:480px){
+    form.check{flex-direction:column}
+    .fields{grid-template-columns:1fr}
+    .pair{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><i>가</i>한글 타이포 린트</a>
+    <nav>
+      <a href="#items">검사 항목</a>
+      <a href="#cli">명령줄</a>
+      <a href="https://github.com/johndefine404/hangul-type-lint">GitHub</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>한국어가 화면에서 <mark>어색하게 끊기는 곳</mark>, 주소 하나로 찾아 드립니다</h1>
+      <p class="lead">단어 중간 줄바꿈, 헤드라인 강제 줄바꿈, 늦게 뜨는 한글 웹폰트, 휴대폰 폭에서 넘치는 글자를 데스크톱과 390px 휴대폰 화면에서 직접 열어 확인합니다. 문제마다 고치는 CSS 한 줄을 붙여 드립니다.</p>
+      <form class="check" id="checkForm">
+        <input id="url" type="text" inputmode="url" autocomplete="url" placeholder="https://우리가게.com" aria-label="검사할 홈페이지 주소" required>
+        <button id="checkBtn" type="submit">검사하기</button>
+      </form>
+      <p class="hint">무료, 가입 없음. 점수는 바로 보여 드리고, 위치와 캡처가 담긴 상세 리포트는 메일로 보내 드립니다.</p>
+    </div>
+    <aside class="demo" aria-label="고치기 전과 후 예시">
+      <h2>같은 문장, 같은 폭</h2>
+      <div class="pair">
+        <div class="pane before" aria-label="고치기 전: 단어 중간에서 끊김">
+          <small>고치기 전</small>
+          <span class="ln">기념일 꽃바구</span>
+          <span class="ln"><b>니</b>는 하루 전</span>
+          <span class="ln">에 예약하시면</span>
+          <span class="ln">원하시는 시간</span>
+          <span class="ln">에 맞춰 드립</span>
+          <span class="ln"><b>니</b>다</span>
+        </div>
+        <div class="pane after">
+          <small>고친 뒤</small>
+          기념일 꽃바구니는 하루 전에 예약하시면 원하시는 시간에 맞춰 드립니다
+        </div>
+      </div>
+      <code>word-break: keep-all;</code>
+    </aside>
+  </section>
+
+  <section class="block" id="result" hidden>
+    <div class="sec-head">
+      <div class="no">검사 결과</div>
+      <div>
+        <h2 id="resTitle">검사가 끝났습니다</h2>
+        <p>위치, 고치는 CSS, 화면 캡처는 상세 리포트에 담아 메일로 보내 드립니다.</p>
+      </div>
+    </div>
+    <div class="res">
+      <div class="scorebox">
+        <span class="badge" id="mockBadge" hidden>예시 결과 (MOCK 모드)</span>
+        <div class="num" id="scoreNum">0</div>
+        <div class="grade" id="scoreGrade"></div>
+        <div class="cnt"><span><b id="cHigh">0</b>심각</span><span><b id="cMed">0</b>보통</span><span><b id="cLow">0</b>낮음</span></div>
+        <div class="url" id="resUrl"></div>
+      </div>
+      <div>
+        <ul class="probs" id="probs"></ul>
+        <form class="lead" id="leadForm">
+          <h3>상세 리포트 받기</h3>
+          <p>문제마다 위치, 이유, 고치는 CSS 한 줄과 표시된 화면 캡처를 보내 드립니다.</p>
+          <div class="fields">
+            <input id="email" type="email" autocomplete="email" placeholder="메일 주소" aria-label="메일 주소" required>
+            <input id="name" type="text" autocomplete="name" placeholder="이름 (선택)" aria-label="이름 (선택)" maxlength="50">
+          </div>
+          <label class="agree"><input id="cReq" type="checkbox"> <span>[필수] 개인정보 수집·이용에 동의합니다</span></label>
+          <details>
+            <summary>자세히 보기</summary>
+            <ul>
+              <li>수집 항목: 메일 주소, 이름(선택), 검사한 홈페이지 주소</li>
+              <li>이용 목적: 상세 리포트 발송, 리포트에 관한 문의 답변</li>
+              <li>보유 기간: 수집일로부터 1년. 삭제를 요청하시면 바로 지웁니다</li>
+              <li>동의하지 않으실 수 있으며, 이 경우 상세 리포트를 메일로 받으실 수 없습니다</li>
+            </ul>
+          </details>
+          <label class="agree"><input id="cMkt" type="checkbox"> <span>[선택] 광고성 정보 수신에 동의합니다 (메일)</span></label>
+          <details>
+            <summary>자세히 보기</summary>
+            <ul>
+              <li>내용: Define404의 홈페이지 개선 서비스 안내, 새 무료 도구 소식</li>
+              <li>보유 기간: 수신을 거부하실 때까지. 메일마다 수신 거부 방법을 적어 드립니다</li>
+              <li>동의하지 않으셔도 상세 리포트는 받으실 수 있습니다</li>
+            </ul>
+          </details>
+          <button id="leadBtn" type="submit" style="margin-top:14px">리포트 받기</button>
+          <p class="msg" id="leadMsg" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="fix">
+      <div>
+        <h2>직접 고치기 어려우면 맡겨 주세요</h2>
+        <p>리포트에 나온 항목을 Define404가 고쳐 드립니다. 홈페이지를 운영하는 가게, 납품 전에 검수가 필요한 제작사 모두 문의하실 수 있습니다.</p>
+      </div>
+      <a class="btn" id="contact" href="https://contact.define404.com">고쳐 드립니다</a>
+    </div>
+  </section>
+
+  <section class="block" id="items">
+    <div class="sec-head">
+      <div class="no">검사 항목</div>
+      <div>
+        <h2>사람이 쓴 한국어처럼 보이는지 봅니다</h2>
+        <p>데스크톱 1280px와 휴대폰 390px 두 화면으로 실제 페이지를 열어 확인합니다.</p>
+      </div>
+    </div>
+    <dl class="items">
+      <dt>단어 중간 줄바꿈</dt><dd>줄이 바뀌는 자리의 앞뒤 글자가 둘 다 한글이면 단어가 쪼개진 것으로 봅니다. 고침: <code>word-break: keep-all;</code></dd>
+      <dt>헤드라인 강제 줄바꿈</dt><dd>제목 안의 <code>&lt;br&gt;</code>. 화면 폭이 바뀌면 한 글자짜리 줄이 생깁니다. 줄바꿈은 폭으로 맞춥니다.</dd>
+      <dt>한글 웹폰트 로딩</dt><dd><code>font-display</code>가 없거나 block이면 폰트가 올 때까지 글자가 안 보입니다. 300KB가 넘는 폰트 파일은 크기를 적어 드립니다.</dd>
+      <dt>한글·영문 서체 짝</dt><dd>영문만 웹폰트로 지정해 한글이 기기 기본 서체로 떨어지는지, 실제로 쓰인 글꼴을 확인합니다.</dd>
+      <dt>줄 길이, 자간, 글자 크기</dt><dd>데스크톱에서 한 줄 45자 초과, 본문 자간 -0.03em보다 좁음, 휴대폰 본문 14px 미만.</dd>
+      <dt>390px 넘침과 잘림</dt><dd>휴대폰 폭에서 가로로 넘치는 요소, 말줄임표나 줄 수 제한으로 잘린 한글 문장.</dd>
+    </dl>
+  </section>
+
+  <section class="block" id="cli">
+    <div class="sec-head">
+      <div class="no">명령줄</div>
+      <div>
+        <h2>내 컴퓨터와 배포 전 자동 검사에서도</h2>
+        <p>오픈소스(MIT)입니다. 심각한 문제가 있으면 종료 코드 1을 내므로 배포 전 검사에 바로 넣을 수 있습니다.</p>
+      </div>
+    </div>
+    <div class="cli">
+      <div>
+        <p>주소나 HTML 파일을 넣으면 화면에 결과를 찍고, 캡처가 담긴 report.html을 만듭니다.</p>
+<pre>npx playwright install chromium
+npx hangul-type-lint check https://example.com
+npx hangul-type-lint check ./dist/index.html --fail-on medium</pre>
+      </div>
+      <div>
+        <p>결과 예시</p>
+<pre>점수 24점 (고칠 곳 많음) · 심각 2 · 보통 7 · 낮음 2
+
+[심각] 단어 중간 줄바꿈 · 390px
+  위치  body &gt; h1
+  고침  word-break: keep-all;</pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>[Define404] 한글 타이포 린트 (hangul-type-lint) · MIT</span>
+    <span><a href="https://contact.define404.com">contact.define404.com</a></span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var checkId = null;
+
+  $("checkForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var btn = $("checkBtn");
+    btn.disabled = true; btn.textContent = "검사하는 중";
+    try {
+      var res = await fetch("/api/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: $("url").value }) });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || "검사하지 못했습니다");
+      show(data);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = "검사하기";
+    }
+  });
+
+  function show(d) {
+    checkId = d.id;
+    $("result").hidden = false;
+    $("mockBadge").hidden = !d.mock;
+    $("scoreNum").textContent = d.score.value;
+    $("scoreGrade").textContent = d.score.grade;
+    $("cHigh").textContent = d.score.counts.high;
+    $("cMed").textContent = d.score.counts.medium;
+    $("cLow").textContent = d.score.counts.low;
+    $("resUrl").textContent = d.url;
+    $("resTitle").textContent = d.problems.length ? "고칠 곳 " + d.problems.length + "종류를 찾았습니다" : "찾은 문제가 없습니다";
+    var ul = $("probs");
+    ul.innerHTML = "";
+    d.problems.forEach(function (p) {
+      var li = document.createElement("li");
+      var sev = document.createElement("span"); sev.className = "sev " + p.severity; sev.textContent = p.severityLabel;
+      var t = document.createElement("span"); t.textContent = p.title;
+      var n = document.createElement("span"); n.className = "n"; n.textContent = p.count + "곳";
+      li.append(sev, t, n); ul.append(li);
+    });
+    $("leadMsg").textContent = "";
+    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  $("leadForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var msg = $("leadMsg");
+    msg.className = "msg";
+    if (!$("cReq").checked) { msg.className = "msg err"; msg.textContent = "개인정보 수집·이용에 동의해 주셔야 리포트를 보내 드릴 수 있습니다"; return; }
+    var btn = $("leadBtn");
+    btn.disabled = true;
+    try {
+      var res = await fetch("/api/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        checkId: checkId, email: $("email").value, name: $("name").value, consentRequired: $("cReq").checked, consentMarketing: $("cMkt").checked
+      }) });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || "신청하지 못했습니다");
+      msg.className = "msg ok";
+      msg.textContent = data.delivered ? "리포트를 보냈습니다. 메일함을 확인해 주세요" : "신청을 받았습니다. 리포트 메일은 준비되는 대로 보내 드립니다";
+    } catch (err) {
+      msg.className = "msg err"; msg.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

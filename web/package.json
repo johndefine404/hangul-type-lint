@@ -1,0 +1,23 @@
+{
+  "name": "hangul-type-lint-web",
+  "private": true,
+  "description": "한글 타이포 린트 무료 웹판 (Cloudflare Workers + Browser Rendering + D1)",
+  "author": "Define404 <john@define404.com>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.0.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "wrangler": "^4.40.0"
+  }
+}

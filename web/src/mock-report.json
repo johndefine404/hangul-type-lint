@@ -1,0 +1,133 @@
+{
+  "tool": "hangul-type-lint",
+  "version": "0.1.0",
+  "url": "https://example.com/",
+  "checkedAt": "2026-10-08T19:09:17.208Z",
+  "score": {
+    "value": 24,
+    "grade": "고칠 곳 많음",
+    "counts": {
+      "high": 2,
+      "medium": 7,
+      "low": 2
+    }
+  },
+  "findings": [
+    {
+      "rule": "midword-break",
+      "severity": "high",
+      "selector": "body > h1",
+      "sample": "우리 동네에서 가장 오래된 꽃집이 여러분의 소중한 하루를 꽃으로 채워 드립니다",
+      "why": "헤드라인 단어가 음절 중간에서 끊겨 바로 눈에 띕니다",
+      "fix": "word-break: keep-all;",
+      "detail": "끊긴 자리 3곳 (예: 서 가장 오|래된 꽃, 소중한 하루|를 꽃으)",
+      "viewport": "mobile"
+    },
+    {
+      "rule": "overflow-x",
+      "severity": "high",
+      "selector": "body > div.wide",
+      "sample": "오늘의 추천 꽃다발 할인 안내 배너입니다",
+      "why": "390px 화면에서 옆으로 170px 넘쳐 페이지가 좌우로 흔들립니다",
+      "fix": "max-width: 100%;",
+      "detail": "요소 폭 544px, 화면 폭 390px",
+      "viewport": "mobile"
+    },
+    {
+      "rule": "br-in-heading",
+      "severity": "medium",
+      "selector": "body > h1",
+      "sample": "우리 동네에서 가장 오래된 꽃집이 여러분의 소중한 하루를 꽃으로 채워 드립니다",
+      "why": "화면 폭이 바뀌면 강제로 끊은 자리 때문에 한 글자짜리 줄이 생깁니다",
+      "fix": "max-width: 18em; /* <br>을 지우고 폭으로 줄바꿈 */",
+      "detail": "<br> 1개",
+      "viewport": "desktop"
+    },
+    {
+      "rule": "font-display",
+      "severity": "medium",
+      "selector": "@font-face \"Nanum Test\"",
+      "sample": "",
+      "why": "한글 폰트 파일은 커서 늦게 오는데, 그동안 글자가 아예 안 보입니다 (최대 3초)",
+      "fix": "font-display: swap;",
+      "detail": "현재 font-display: block",
+      "viewport": "desktop"
+    },
+    {
+      "rule": "font-load-failed",
+      "severity": "medium",
+      "selector": "@font-face \"Nanum Test\"",
+      "sample": "",
+      "why": "한글 웹폰트를 불러오지 못해 기기 기본 서체로 나옵니다",
+      "fix": "src: url(\"/fonts/올바른-경로.woff2\") format(\"woff2\");",
+      "detail": "불러오기 실패",
+      "viewport": "desktop"
+    },
+    {
+      "rule": "font-pairing",
+      "severity": "medium",
+      "selector": "body > h1",
+      "sample": "우리 동네에서 가장 오래된 꽃집이 여러분의 소중한 하루를 꽃으로 채워 드립니다",
+      "why": "영문은 웹폰트로, 한글은 기기 기본 서체(Apple SD Gothic Neo)로 나와 한 문장 안에서 글자 모양이 섞입니다",
+      "fix": "font-family: \"Inter\", \"Pretendard\", \"Apple SD Gothic Neo\", sans-serif;",
+      "detail": "실제로 쓰인 글꼴: Inter(웹폰트) 9자, Apple SD Gothic Neo(기기 기본) 33자",
+      "viewport": "desktop"
+    },
+    {
+      "rule": "midword-break",
+      "severity": "medium",
+      "selector": "body > p.long",
+      "sample": "저희 꽃집은 이십 년 넘게 같은 자리에서 동네 분들의 기념일과 행사를 함께해 왔습니다. 매일 새벽 꽃시장에서...",
+      "why": "단어가 음절 중간에서 끊겨 읽다가 걸립니다",
+      "fix": "word-break: keep-all;",
+      "detail": "끊긴 자리 6곳 (예:  분들의 기|념일과 , 시장에서 직|접 고른)",
+      "viewport": "mobile"
+    },
+    {
+      "rule": "font-size-small",
+      "severity": "medium",
+      "selector": "body > p.tiny",
+      "sample": "작은 글씨 안내: 꽃은 계절과 시장 상황에 따라 사진과 다를 수 있으며 비슷한 색감의 다른 꽃으로 바꿔 드릴...",
+      "why": "휴대폰에서 본문이 12px라 작아서 읽기 힘듭니다",
+      "fix": "font-size: 15px;",
+      "detail": "",
+      "count": 1,
+      "viewport": "mobile"
+    },
+    {
+      "rule": "text-clipped",
+      "severity": "medium",
+      "selector": "body > div.card-title",
+      "sample": "봄맞이 튤립 꽃다발 이십 송이 특별 구성 한정 판매",
+      "why": "390px 화면에서 한글 문장이 잘려 뒷부분이 보이지 않습니다",
+      "fix": "white-space: normal; text-overflow: clip;",
+      "detail": "말줄임표(...)로 잘림",
+      "viewport": "mobile"
+    },
+    {
+      "rule": "line-too-long",
+      "severity": "low",
+      "selector": "body > p.long",
+      "sample": "저희 꽃집은 이십 년 넘게 같은 자리에서 동네 분들의 기념일과 행사를 함께해 왔습니다. 매일 새벽 꽃시장에서...",
+      "why": "한 줄이 약 109자라 다음 줄 시작을 찾기 어렵습니다 (한글 본문은 35~45자가 편합니다)",
+      "fix": "max-width: 38em;",
+      "detail": "약 109자 x 2줄",
+      "viewport": "desktop"
+    },
+    {
+      "rule": "letter-spacing-tight",
+      "severity": "low",
+      "selector": "body > p.tiny",
+      "sample": "작은 글씨 안내: 꽃은 계절과 시장 상황에 따라 사진과 다를 수 있으며 비슷한 색감의 다른 꽃으로 바꿔 드릴...",
+      "why": "본문 자간이 -0.060em이라 한글 획이 서로 붙어 보입니다",
+      "fix": "letter-spacing: -0.01em;",
+      "detail": "글자 크기 12px, 자간 -0.72px",
+      "count": 1,
+      "viewport": "desktop"
+    }
+  ],
+  "fonts": [],
+  "meta": {
+    "note": "미리 만든 예시 결과 (fixtures/bad.html 검사 결과)"
+  }
+}
