@@ -251,9 +251,11 @@
     <div class="cli">
       <div>
         <p>주소나 HTML 파일을 넣으면 화면에 결과를 찍고, 캡처가 담긴 report.html을 만듭니다.</p>
-<pre>npx playwright install chromium
-npx hangul-type-lint check https://example.com
-npx hangul-type-lint check ./dist/index.html --fail-on medium</pre>
+<pre>git clone https://github.com/johndefine404/hangul-type-lint.git
+cd hangul-type-lint &amp;&amp; npm install
+npx playwright install chromium
+node bin/hangul-type-lint.mjs check https://example.com
+node bin/hangul-type-lint.mjs check ./dist/index.html --fail-on medium</pre>
       </div>
       <div>
         <p>결과 예시</p>

@@ -35,8 +35,11 @@
 Node.js 20 이상이 필요합니다.
 
 ```bash
+git clone https://github.com/johndefine404/hangul-type-lint.git
+cd hangul-type-lint
 npm install
 npx playwright install chromium        # 처음 한 번
+npm test                               # 시험용 두 페이지로 확인
 node bin/hangul-type-lint.mjs check https://example.com
 node bin/hangul-type-lint.mjs check ./dist/index.html --fail-on medium
 ```
@@ -88,6 +91,8 @@ npm에 올린 뒤에는 `npx hangul-type-lint check <주소>`로 씁니다 (아�
 ```bash
 cd web
 npm install
+npx wrangler types                     # 타입 파일(worker-configuration.d.ts) 만들기
+npm run check                          # 타입 검사
 npx wrangler d1 migrations apply DB --local
 npx wrangler dev
 ```
