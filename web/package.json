@@ -10,14 +10,15 @@
     "db:local": "wrangler d1 migrations apply DB --local",
     "deploy": "wrangler deploy",
     "types": "wrangler types",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "node --test test/*.test.ts"
   },
   "dependencies": {
-    "@cloudflare/puppeteer": "^1.0.0",
-    "hono": "^4.6.0"
+    "@cloudflare/puppeteer": "^1.4.0",
+    "hono": "^4.13.13"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "wrangler": "^4.40.0"
+    "typescript": "^7.0.2",
+    "wrangler": "^4.149.0"
   }
 }

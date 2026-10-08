@@ -18,3 +18,5 @@ screenshots/
 shots/
 # wrangler types 로 만드는 파일
 worker-configuration.d.ts
+# 운영 배포 설정 (D1 id 등 계정 값). 저장소에 올리지 않는다
+web/wrangler.prod.toml

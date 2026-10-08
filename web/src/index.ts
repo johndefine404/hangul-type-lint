@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import type { Env } from "./env";
 import { runCheck } from "./browser";
-import { sendMail } from "./mail";
+import { mailProvider, sendMail } from "./mail";
 import { adFooter, dailyMaintenance, isNightKst, notifyConsent, unsubUrl, withdrawByToken } from "./consent";
 import mockReport from "./mock-report.json";
 import { RULES, SEVERITY_LABEL } from "../../src/rules.js";
@@ -12,6 +12,21 @@ const app = new Hono<{ Bindings: Env }>();
 
 const today = () => new Date().toISOString().slice(0, 10);
 const isMock = (env: Env) => env.MOCK === "1" || !env.BROWSER;
+const DEFAULT_PRIVACY_URL = "https://contact.define404.com/privacy.html";
+
+// 다른 사이트에서 보낸 쓰기 요청을 막는다. 메일 앱의 한 번 누름 수신 거부(출처 머리글 없음)는 받는다
+app.use("/api/*", async (c, next) => {
+  if (c.req.method !== "GET" && c.req.method !== "HEAD") {
+    const origin = c.req.header("Origin");
+    const self = new URL(c.req.url).origin;
+    const allowed = (c.env.ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const isUnsub = new URL(c.req.url).pathname === "/api/unsubscribe";
+    if (origin ? origin !== self && !allowed.includes(origin) : !isUnsub) {
+      return c.json({ error: "허용하지 않은 요청입니다" }, 403);
+    }
+  }
+  await next();
+});
 
 // 접속자별 요청 제한
 app.use("/api/*", async (c, next) => {
@@ -142,7 +157,7 @@ app.post("/api/lead", async (c) => {
   }
 
   const note = `새 리포트 신청\n메일: ${email}\n검사 주소: ${row.url}\n점수: ${report.score.value}\n광고 수신 동의: ${marketing ? "예" : "아니오"}`;
-  if (c.env.OWNER_EMAIL && c.env.RESEND_API_KEY) {
+  if (c.env.OWNER_EMAIL && mailProvider(c.env) !== "console") {
     await sendMail(c.env, c.env.OWNER_EMAIL, `[리드] ${host} ${report.score.value}점`, `<pre>${note.replace(/</g, "&lt;")}</pre>`);
   } else {
     console.log("[lead]\n" + note);
@@ -151,25 +166,30 @@ app.post("/api/lead", async (c) => {
 });
 
 // 광고 수신 거부: 메일 속 링크를 한 번 누르면 바로 처리한다. POST 는 메일 앱의 한 번 누름 수신 거부(RFC 8058)용
-const unsubPage = (ok: boolean, contact: string) => `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+const unsubPage = (ok: boolean, contact: string, privacy: string) => `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>광고 수신 거부</title></head>
 <body style="margin:0;background:#FAF7F3;color:#24201C;font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;word-break:keep-all;line-height:1.7">
 <main style="max-width:560px;margin:0 auto;padding:48px 16px">
 <h1 style="font-size:24px">${ok ? "광고 수신을 거부하셨습니다" : "수신 거부 링크를 확인하지 못했습니다"}</h1>
 <p>${ok ? "앞으로 Define404의 광고성 정보를 보내지 않습니다. 처리 결과는 메일로도 알려 드립니다." : "링크가 잘렸거나 이미 지워진 신청입니다. 아래 연락처로 메일 주소를 알려 주시면 바로 처리합니다."}</p>
-<p style="font-size:14px;color:#5E5650">보낸 곳: Define404 · 연락처: <a href="${contact}">${contact}</a></p>
+<p style="font-size:14px;color:#5E5650">보낸 곳: Define404 · 연락처: <a href="${contact}">${contact}</a> · <a href="${privacy}">개인정보 처리방침</a></p>
 </main></body></html>`;
 
 app.get("/api/unsubscribe", async (c) => {
   const r = await withdrawByToken(c.env, c.req.query("t") || "");
-  return c.html(unsubPage(r.ok, c.env.CONTACT_URL), r.ok ? 200 : 404);
+  return c.html(unsubPage(r.ok, c.env.CONTACT_URL, c.env.PRIVACY_URL || DEFAULT_PRIVACY_URL), r.ok ? 200 : 404);
 });
 app.post("/api/unsubscribe", async (c) => {
   const r = await withdrawByToken(c.env, c.req.query("t") || "");
   return c.json({ ok: r.ok }, r.ok ? 200 : 404);
 });
 
-app.get("/api/health", (c) => c.json({ ok: true, mock: isMock(c.env) }));
+app.get("/api/health", (c) => c.json({ ok: true, mock: isMock(c.env), mail: mailProvider(c.env) }));
+
+// 화면이 쓰는 설정값: 실제 검사 가능 여부, 처리방침 주소
+app.get("/api/config", (c) =>
+  c.json({ live: !isMock(c.env), privacyUrl: c.env.PRIVACY_URL || DEFAULT_PRIVACY_URL, contactUrl: c.env.CONTACT_URL }),
+);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 app.onError((err, c) => {

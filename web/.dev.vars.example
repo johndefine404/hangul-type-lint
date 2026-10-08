@@ -1,3 +1,8 @@
-# 로컬에서 실제 메일을 보내 보려면 .dev.vars 로 복사해 채운다 (비우면 콘솔에만 찍힌다)
+# 로컬에서 실제 메일을 보내 보려면 .dev.vars 로 복사해 채운다 (모두 비우면 콘솔에만 찍힌다)
+# Gmail API (gmail.send 범위의 refresh token). 셋 다 있으면 Gmail 로 보낸다
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+# Gmail 설정이 없을 때 쓰는 Resend
 RESEND_API_KEY=
 OWNER_EMAIL=

@@ -70,13 +70,13 @@ npm에 올린 뒤에는 `npx hangul-type-lint check <주소>`로 씁니다 (아�
 
 ## 무료 웹판 (Cloudflare)
 
-주소를 넣으면 점수와 문제 종류를 화면에 보여 주고, 위치·고치는 CSS·캡처가 담긴 상세 리포트는 메일로 보냅니다. 메일 신청에는 개인정보 수집·이용 동의(필수)를 받고, 광고성 정보 수신 동의(선택)는 따로 받습니다. 자세한 기준은 아래 "개인정보와 광고 수신"에 있습니다. 리드(신청자)는 D1에 쌓이고, 운영자에게 Resend 메일로 알립니다. 키가 없으면 콘솔에만 찍습니다.
+주소를 넣으면 점수와 문제 종류를 화면에 보여 주고, 위치·고치는 CSS·캡처가 담긴 상세 리포트는 메일로 보냅니다. 메일 신청에는 개인정보 수집·이용 동의(필수)를 받고, 광고성 정보 수신 동의(선택)는 따로 받습니다. 자세한 기준은 아래 "개인정보와 광고 수신"에 있습니다. 리드(신청자)는 D1에 쌓이고, 운영자에게 메일로 알립니다. 메일은 Gmail API(Google Workspace)를 먼저 쓰고, 그 설정이 없으면 Resend, 둘 다 없으면 콘솔에만 찍습니다.
 
 ```
 브라우저 ─> Worker (Hono) ─> Browser Rendering: 실제 페이지 검사 (MOCK = "1" 이면 예시 결과)
                 │
                 ├─> D1: 검사 결과, 리포트 신청(동의 시각 포함), 하루 사용량
-                └─> Resend: 상세 리포트 메일, 운영자 알림
+                └─> Gmail API 또는 Resend: 상세 리포트 메일, 동의 처리 알림, 운영자 알림
 ```
 
 | 보호 장치 | 기본값 |
@@ -85,6 +85,7 @@ npm에 올린 뒤에는 `npx hangul-type-lint check <주소>`로 씁니다 (아�
 | 하루 리포트 메일 상한 `DAILY_MAIL_LIMIT` | 100통 |
 | 접속자별 요청 제한 | 1분에 10번 |
 | 내부망 주소 거절 | localhost, 사설 IP |
+| 다른 사이트에서 보낸 쓰기 요청 | 거절 (같은 주소와 `ALLOWED_ORIGINS`만 받음) |
 
 로컬 실행 (MOCK 모드, 원격 호출 없음):
 
@@ -93,20 +94,45 @@ cd web
 npm install
 npx wrangler types                     # 타입 파일(worker-configuration.d.ts) 만들기
 npm run check                          # 타입 검사
+npm test                               # 메일 원문(MIME) 만들기 시험
 npx wrangler d1 migrations apply DB --local
 npx wrangler dev
 ```
 
-배포 (시험하지 않았습니다):
+배포:
 
 ```bash
 npx wrangler d1 create hangul-type-lint      # 받은 database_id 를 wrangler.toml 에 넣는다
 npx wrangler d1 migrations apply DB --remote
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put OWNER_EMAIL
-# wrangler.toml 의 MOCK 을 "0" 으로 바꾼다
+# 메일: 아래 "메일 설정" 중 하나
+npx wrangler secret put OWNER_EMAIL          # 운영자 알림을 받을 주소 (선택)
+# wrangler.toml 의 MOCK 을 "0" 으로, MAIL_FROM 을 보내는 주소로 바꾼다
 npx wrangler deploy
 ```
+
+운영 값(D1 id, 도메인, MOCK 끄기)은 저장소에 올리지 않는 `web/wrangler.prod.toml`에 따로 두고 `--config wrangler.prod.toml`로 쓰는 것을 권합니다.
+
+### 메일 설정
+
+`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN` 셋이 모두 있으면 Gmail API로 보냅니다. 없고 `RESEND_API_KEY`가 있으면 Resend로 보냅니다. 둘 다 없으면 콘솔에만 남깁니다.
+
+Gmail API (Google Workspace 계정으로 보내기):
+
+1. Google Cloud 콘솔에서 프로젝트를 만들고 Gmail API를 켭니다
+2. OAuth 동의 화면을 만듭니다. Workspace 계정이면 "내부"로 두면 검수 없이 쓸 수 있습니다
+3. 사용자 인증 정보에서 OAuth 클라이언트 ID를 "데스크톱 앱"으로 만듭니다. 클라이언트 ID와 비밀번호가 나옵니다
+4. 보내는 계정으로 로그인해 `https://www.googleapis.com/auth/gmail.send` 범위 하나만 승인받고 refresh token을 받습니다. 예: OAuth 2.0 Playground에서 오른쪽 위 설정에 내 클라이언트 ID·비밀번호를 넣고, 범위에 위 주소를 적어 승인한 뒤 "Exchange authorization code for tokens"
+5. 세 값을 Worker 비밀값으로 넣습니다. 화면이나 파일에 남지 않게 표준 입력으로 넘깁니다
+
+```bash
+npx wrangler secret put GMAIL_CLIENT_ID
+npx wrangler secret put GMAIL_CLIENT_SECRET
+npx wrangler secret put GMAIL_REFRESH_TOKEN
+```
+
+`MAIL_FROM`의 주소는 refresh token을 받은 계정 주소(또는 그 계정에 등록된 보내는 주소)여야 합니다. 표시 이름은 한글도 됩니다 (예: `한글 타이포 린트 <you@example.com>`). Worker는 refresh token으로 액세스 토큰을 받아 만료 전까지 메모리에 두고, 메일 원문(MIME)을 직접 만들어 `users/me/messages/send`로 보냅니다.
+
+Resend: `npx wrangler secret put RESEND_API_KEY`. `MAIL_FROM`은 Resend에서 확인한 도메인 주소여야 합니다.
 
 Browser Rendering의 무료 한도와 플랜 조건은 아직 확인하지 않았습니다. 배포 전에 Cloudflare 문서에서 확인하고 `DAILY_LIMIT`을 맞춥니다.
 
@@ -128,6 +154,7 @@ Browser Rendering의 무료 한도와 플랜 조건은 아직 확인하지 않�
 - 동의, 수신 거부, 2년 만료 때마다 처리 결과를 메일로 알립니다. 메일 설정이 없으면 서버 기록에 남깁니다 (제50조 제7항)
 - 2년마다 다시 묻는 대신, 동의일로부터 2년이 지나면 동의를 끝내고 알립니다. 매일 01:00 UTC(한국 10:00) 예약 작업이 처리합니다 (제50조 제8항)
 - 이름은 받지 않습니다. 화면 캡처는 리포트를 보낸 뒤 지웁니다
+- 서버 운영·저장은 Cloudflare, Inc.(미국), 메일 발송은 Google LLC(미국)에 맡깁니다. 화면의 동의 문구와 바닥글에 개인정보 처리방침 링크(`PRIVACY_URL`, 기본 https://contact.define404.com/privacy.html)를 둡니다
 
 ## 시험한 범위
 
@@ -139,7 +166,8 @@ Browser Rendering의 무료 한도와 플랜 조건은 아직 확인하지 않�
 | 웹판 화면, 검사 요청, 리포트 신청, 동의 검사, 요청 제한 | wrangler dev + MOCK 모드에서 확인 |
 | 웹판 화면이 이 검사기를 통과하는지 | 통과 (100점), 1280px·390px 가로 넘침 0 |
 | 웹판 실제 검사 (Browser Rendering) | 시험 안 함. 코드만 있음 (`web/src/browser.ts`) |
-| 리포트 메일 발송, 캡처 첨부 (Resend) | 시험 안 함. 로컬에서는 콘솔 출력만 확인 |
+| 리포트 메일 발송 (Gmail API) | wrangler dev에서 실제 발송·수신 확인 (광고 없는 리포트). 메일 원문 만들기는 `cd web && npm test` |
+| 캡처 첨부 메일, Resend 경로 | 시험 안 함 |
 | 동의 처리 알림, 수신 거부 링크, 매일 삭제·만료 작업 | wrangler dev + MOCK 모드에서 확인 (메일은 콘솔 출력). 낮 시간 광고 포함 메일은 시험 안 함 |
 | 웹판에서 서체 짝 실제 확인, 폰트 크기 | 웹판은 추정 방식만 씁니다. 폰트 크기는 응답 헤더 기준이라 빠질 수 있습니다 |
 

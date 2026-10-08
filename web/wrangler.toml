@@ -38,8 +38,12 @@ MOCK = "1"
 DAILY_LIMIT = "50"
 # 하루 리포트 메일 상한
 DAILY_MAIL_LIMIT = "100"
-MAIL_FROM = "한글 타이포 린트 <onboarding@resend.dev>"
+# 보내는 사람. Gmail API 로 보낼 때는 토큰을 받은 계정 주소여야 한다
+MAIL_FROM = "한글 타이포 린트 <john@define404.com>"
 CONTACT_URL = "https://contact.define404.com"
+PRIVACY_URL = "https://contact.define404.com/privacy.html"
+# 쓰기 요청(검사, 리포트 신청)을 받을 다른 출처. 비우면 같은 주소에서 온 요청만 받는다
+ALLOWED_ORIGINS = ""
 
 # 매일 01:00 UTC (한국 시간 10:00): 보유 기간이 지난 정보 삭제, 2년 지난 광고 수신 동의 종료
 [triggers]
