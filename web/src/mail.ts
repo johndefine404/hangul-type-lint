@@ -3,7 +3,14 @@ import type { Env } from "./env";
 
 type Attachment = { filename: string; content: string; content_id?: string };
 
-export async function sendMail(env: Env, to: string, subject: string, html: string, attachments: Attachment[] = []) {
+export async function sendMail(
+  env: Env,
+  to: string,
+  subject: string,
+  html: string,
+  attachments: Attachment[] = [],
+  headers: Record<string, string> = {},
+) {
   if (!env.RESEND_API_KEY) {
     console.log(`[mail:console] to=${to} subject=${subject} bytes=${html.length} attachments=${attachments.length}`);
     return { sent: false, reason: "RESEND_API_KEY 없음" };
@@ -11,7 +18,7 @@ export async function sendMail(env: Env, to: string, subject: string, html: stri
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM, to: [to], subject, html, attachments }),
+    body: JSON.stringify({ from: env.MAIL_FROM, to: [to], subject, html, attachments, headers }),
   });
   if (!res.ok) {
     console.error("resend error", res.status, await res.text());

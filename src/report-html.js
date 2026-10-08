@@ -3,7 +3,8 @@ import { RULES, SEVERITY_LABEL } from "./rules.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-export function renderReport(report, { images = true, cta = true } = {}) {
+// mailFooter: 메일로 보낼 때 맨 아래에 붙이는 HTML (보낸 곳, 연락처, 수신 거부 안내)
+export function renderReport(report, { images = true, cta = true, mailFooter = "" } = {}) {
   const { score, findings } = report;
   const items = findings
     .map(
@@ -81,6 +82,7 @@ export function renderReport(report, { images = true, cta = true } = {}) {
   ${findings.length ? items : `<p class="empty">찾은 문제가 없습니다. 검사한 항목 안에서는 한글이 잘 보이는 페이지입니다.</p>`}
   ${cta ? `<div class="cta">직접 고치기 어려우면 맡겨 주세요. <a href="https://contact.define404.com">Define404</a>가 위 항목을 고쳐 드립니다. https://contact.define404.com</div>` : ""}
   <footer>[Define404] hangul-type-lint ${esc(report.version || "")} · 검사 기준은 한글 웹 글쓰기 관행을 따른 것이며, 고치기 줄은 출발점입니다. 실제 화면에서 다시 확인하세요.</footer>
+  ${mailFooter}
 </div>
 </body>
 </html>`;

@@ -40,3 +40,7 @@ DAILY_LIMIT = "50"
 DAILY_MAIL_LIMIT = "100"
 MAIL_FROM = "한글 타이포 린트 <onboarding@resend.dev>"
 CONTACT_URL = "https://contact.define404.com"
+
+# 매일 01:00 UTC (한국 시간 10:00): 보유 기간이 지난 정보 삭제, 2년 지난 광고 수신 동의 종료
+[triggers]
+crons = ["0 1 * * *"]

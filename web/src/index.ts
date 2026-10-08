@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { Env } from "./env";
 import { runCheck } from "./browser";
 import { sendMail } from "./mail";
+import { adFooter, dailyMaintenance, isNightKst, notifyConsent, unsubUrl, withdrawByToken } from "./consent";
 import mockReport from "./mock-report.json";
 import { RULES, SEVERITY_LABEL } from "../../src/rules.js";
 import { renderReport } from "../../src/report-html.js";
@@ -97,7 +98,7 @@ app.post("/api/check", async (c) => {
 
 app.post("/api/lead", async (c) => {
   const b = await c.req
-    .json<{ checkId?: string; email?: string; name?: string; consentRequired?: boolean; consentMarketing?: boolean }>()
+    .json<{ checkId?: string; email?: string; consentRequired?: boolean; consentMarketing?: boolean }>()
     .catch(() => ({}) as Record<string, never>);
   const email = String(b.email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 200) return c.json({ error: "메일 주소를 확인해 주세요" }, 400);
@@ -111,31 +112,61 @@ app.post("/api/lead", async (c) => {
   }
 
   const now = new Date().toISOString();
+  // 광고 수신 동의는 선택이다. 동의하지 않아도 리포트는 똑같이 보낸다 (개인정보 보호법 제22조 제5항)
   const marketing = b.consentMarketing === true;
+  const token = crypto.randomUUID();
   await c.env.DB.prepare(
-    "INSERT INTO leads (email, name, check_id, url, consent_required_at, consent_marketing, consent_marketing_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO leads (email, check_id, url, consent_required_at, consent_marketing, consent_marketing_at, unsub_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
   )
-    .bind(email, String(b.name || "").slice(0, 50) || null, b.checkId, row.url, now, marketing ? 1 : 0, marketing ? now : null, now)
+    .bind(email, b.checkId, row.url, now, marketing ? 1 : 0, marketing ? now : null, token, now)
     .run();
 
   const { report, shots } = JSON.parse(row.report) as { report: any; shots: Record<string, string> };
   const host = new URL(row.url).hostname;
   const attachments = Object.entries(shots || {}).map(([id, content]) => ({ filename: `${id}.jpg`, content, content_id: id }));
-  const html = renderReport(report, { images: attachments.length > 0 });
-  const mail = await sendMail(c.env, email, `[한글 타이포 검사] ${host} 상세 리포트`, html, attachments);
+
+  // 리포트 메일에 서비스 안내(광고)는 광고 수신에 동의한 분께만, 한국 시간 08:00 ~ 21:00 에만 넣는다 (정보통신망법 제50조)
+  const ad = marketing && !isNightKst();
+  const link = unsubUrl(new URL(c.req.url).origin, token);
+  const html = renderReport(report, { images: attachments.length > 0, cta: ad, mailFooter: ad ? adFooter(c.env, link, now) : "" });
+  const subject = `${ad ? "(광고) " : ""}[한글 타이포 검사] ${host} 상세 리포트`;
+  const headers: Record<string, string> = ad ? { "List-Unsubscribe": `<${link}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } : {};
+  const mail = await sendMail(c.env, email, subject, html, attachments, headers);
+
+  // 광고 수신 동의 처리 결과를 따로 알린다 (정보통신망법 제50조 제7항)
+  if (marketing) await notifyConsent(c.env, email, "agree", now, link);
 
   // 캡처는 보낸 뒤 지운다 (저장 공간과 개인정보를 줄이려고)
   if (attachments.length) {
     await c.env.DB.prepare("UPDATE checks SET report = ? WHERE id = ?").bind(JSON.stringify({ report, shots: {} }), b.checkId).run();
   }
 
-  const note = `새 리포트 신청\n메일: ${email}\n이름: ${b.name || "-"}\n검사 주소: ${row.url}\n점수: ${report.score.value}\n광고 수신 동의: ${marketing ? "예" : "아니오"}`;
+  const note = `새 리포트 신청\n메일: ${email}\n검사 주소: ${row.url}\n점수: ${report.score.value}\n광고 수신 동의: ${marketing ? "예" : "아니오"}`;
   if (c.env.OWNER_EMAIL && c.env.RESEND_API_KEY) {
     await sendMail(c.env, c.env.OWNER_EMAIL, `[리드] ${host} ${report.score.value}점`, `<pre>${note.replace(/</g, "&lt;")}</pre>`);
   } else {
     console.log("[lead]\n" + note);
   }
-  return c.json({ ok: true, delivered: mail.sent });
+  return c.json({ ok: true, delivered: mail.sent, marketing });
+});
+
+// 광고 수신 거부: 메일 속 링크를 한 번 누르면 바로 처리한다. POST 는 메일 앱의 한 번 누름 수신 거부(RFC 8058)용
+const unsubPage = (ok: boolean, contact: string) => `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>광고 수신 거부</title></head>
+<body style="margin:0;background:#FAF7F3;color:#24201C;font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;word-break:keep-all;line-height:1.7">
+<main style="max-width:560px;margin:0 auto;padding:48px 16px">
+<h1 style="font-size:24px">${ok ? "광고 수신을 거부하셨습니다" : "수신 거부 링크를 확인하지 못했습니다"}</h1>
+<p>${ok ? "앞으로 Define404의 광고성 정보를 보내지 않습니다. 처리 결과는 메일로도 알려 드립니다." : "링크가 잘렸거나 이미 지워진 신청입니다. 아래 연락처로 메일 주소를 알려 주시면 바로 처리합니다."}</p>
+<p style="font-size:14px;color:#5E5650">보낸 곳: Define404 · 연락처: <a href="${contact}">${contact}</a></p>
+</main></body></html>`;
+
+app.get("/api/unsubscribe", async (c) => {
+  const r = await withdrawByToken(c.env, c.req.query("t") || "");
+  return c.html(unsubPage(r.ok, c.env.CONTACT_URL), r.ok ? 200 : 404);
+});
+app.post("/api/unsubscribe", async (c) => {
+  const r = await withdrawByToken(c.env, c.req.query("t") || "");
+  return c.json({ ok: r.ok }, r.ok ? 200 : 404);
 });
 
 app.get("/api/health", (c) => c.json({ ok: true, mock: isMock(c.env) }));
@@ -146,4 +177,10 @@ app.onError((err, c) => {
   return c.json({ error: "잠시 후 다시 시도해 주세요" }, 500);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // 매일 한 번: 보유 기간이 지난 정보 삭제, 2년 지난 광고 수신 동의 종료
+  async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(dailyMaintenance(env));
+  },
+};
