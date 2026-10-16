@@ -197,10 +197,24 @@ app.onError((err, c) => {
   return c.json({ error: "잠시 후 다시 시도해 주세요" }, 500);
 });
 
-export default {
-  fetch: app.fetch,
+const worker = {
+  // 정기 실행은 define404-slack 워커가 이 주소로 대신 부른다 (무료 요금제 계정당 정기 실행 5개 한도)
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const u = new URL(req.url);
+    if (u.pathname === "/__cron") {
+      if (req.method !== "POST" || !env.CRON_SECRET || req.headers.get("x-cron-secret") !== env.CRON_SECRET) {
+        return new Response("Not Found", { status: 404 });
+      }
+      const t = Number(u.searchParams.get("t")) || Date.now();
+      await worker.scheduled({ scheduledTime: t, cron: "", noRetry() {} } as ScheduledController, env, ctx);
+      return new Response("ok");
+    }
+    return app.fetch(req, env, ctx);
+  },
   // 매일 한 번: 보유 기간이 지난 정보 삭제, 2년 지난 광고 수신 동의 종료
   async scheduled(_c: ScheduledController, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(dailyMaintenance(env));
   },
 };
+
+export default worker;

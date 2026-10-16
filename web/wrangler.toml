@@ -47,4 +47,4 @@ ALLOWED_ORIGINS = ""
 
 # 매일 01:00 UTC (한국 시간 10:00): 보유 기간이 지난 정보 삭제, 2년 지난 광고 수신 동의 종료
 [triggers]
-crons = ["0 1 * * *"]
+crons = [] # 정기 실행은 define404-slack 워커가 /__cron 으로 대신 부른다

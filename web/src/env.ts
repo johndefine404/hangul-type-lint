@@ -4,6 +4,7 @@ export interface Env {
   BROWSER?: unknown; // Cloudflare Browser Rendering
   DB: D1Database;
   LIMITER?: RateLimit;
+  CRON_SECRET?: string; // define404-slack 워커가 /__cron 을 부를 때 쓰는 비밀값
 
   MOCK?: string;
   DAILY_LIMIT: string;
